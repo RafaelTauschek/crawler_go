@@ -5,19 +5,29 @@ import (
 	"net/url"
 )
 
-func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
+func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
+	_, ok := cfg.pages[normalizedURL]
 
-	baseURL, err := url.Parse(rawBaseURL)
-	if err != nil {
-		return
+	if ok {
+		cfg.mu.Lock()
+		cfg.pages[normalizedURL]++
+		cfg.mu.Unlock()
+		return false
 	}
 
+	cfg.mu.Lock()
+	cfg.pages[normalizedURL] = 1
+	cfg.mu.Unlock()
+	return true
+}
+
+func (cfg *config) crawlPage(rawCurrentURL string) {
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
 		return
 	}
 
-	if baseURL.Host != currentURL.Host {
+	if cfg.baseUrl.Host != currentURL.Host {
 		return
 	}
 
@@ -26,19 +36,19 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 		return
 	}
 
-	_, ok := pages[normalizedURL]
-	if ok {
-		pages[normalizedURL]++
-	} else {
-		pages[normalizedURL] = 1
+	isFirst := cfg.addPageVisit(normalizedURL)
 
+	if isFirst {
 		html, err := getHTML(rawCurrentURL)
 		if err != nil {
 			return
 		}
+
 		fmt.Printf("Recieved HTML from current URL: %v\n", normalizedURL)
 
-		urls, err := getURLsFromHTML(html, rawBaseURL)
+		baseUrl := cfg.baseUrl.String()
+
+		urls, err := getURLsFromHTML(html, baseUrl)
 		if err != nil {
 			return
 		}
@@ -48,7 +58,7 @@ func crawlPage(rawBaseURL, rawCurrentURL string, pages map[string]int) {
 
 		for _, url := range urls {
 			fmt.Printf("Started to crawl URL: %v\n", url)
-			crawlPage(rawBaseURL, url, pages)
+			cfg.crawlPage(url)
 		}
 	}
 }

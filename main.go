@@ -30,10 +30,20 @@ func main() {
 
 	fmt.Printf("starting crawl of: %v\n", args[0])
 
-	pages := make(map[string]int)
-	crawlPage(args[0], args[0], pages)
+	url, err := url.Parse(args[0])
+	if err != nil {
+		fmt.Println("can't parse url")
+		os.Exit(1)
+	}
 
-	for url, count := range pages {
+	cfg := config{
+		pages:   make(map[string]int),
+		baseUrl: url,
+	}
+
+	cfg.crawlPage(args[0])
+
+	for url, count := range cfg.pages {
 		fmt.Printf("%s: %d\n", url, count)
 	}
 
