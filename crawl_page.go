@@ -41,7 +41,7 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		return
 	}
 
-	if cfg.baseUrl.Host != currentURL.Host {
+	if cfg.baseUrl.Hostname() != currentURL.Hostname() {
 		return
 	}
 
