@@ -22,6 +22,20 @@ func (cfg *config) addPageVisit(normalizedURL string) (isFirst bool) {
 }
 
 func (cfg *config) crawlPage(rawCurrentURL string) {
+	cfg.concurrencyControl <- struct{}{}
+	defer func() {
+		<-cfg.concurrencyControl
+		cfg.wg.Done()
+	}()
+
+	cfg.mu.Lock()
+	pagesLen := len(cfg.pages)
+	cfg.mu.Unlock()
+
+	if pagesLen >= cfg.maxPages {
+		return
+	}
+
 	currentURL, err := url.Parse(rawCurrentURL)
 	if err != nil {
 		return
@@ -43,9 +57,6 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 		if err != nil {
 			return
 		}
-
-		fmt.Printf("Recieved HTML from current URL: %v\n", normalizedURL)
-
 		baseUrl := cfg.baseUrl.String()
 
 		urls, err := getURLsFromHTML(html, baseUrl)
@@ -53,12 +64,10 @@ func (cfg *config) crawlPage(rawCurrentURL string) {
 			return
 		}
 
-		fmt.Printf("Found %d URLS on %s\n", len(urls), normalizedURL)
-		fmt.Printf("URLs found: %v\n", urls)
-
 		for _, url := range urls {
 			fmt.Printf("Started to crawl URL: %v\n", url)
-			cfg.crawlPage(url)
+			cfg.wg.Add(1)
+			go cfg.crawlPage(url)
 		}
 	}
 }

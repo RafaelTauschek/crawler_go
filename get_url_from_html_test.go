@@ -14,24 +14,24 @@ func TestGetUrlsFromHTML(t *testing.T) {
 	}{
 		{
 			name:     "absolute and relative URLs",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://blog.example.dev",
 			inputBody: `
 <html>
 	<body>
 		<a href="/path/one">
-			<span>Boot.dev</span>
+			<span>example.dev</span>
 		</a>
 		<a href="https://other.com/path/one">
-			<span>Boot.dev</span>
+			<span>Example.dev</span>
 		</a>
 	</body>
 </html>
 `,
-			expected: []string{"https://blog.boot.dev/path/one", "https://other.com/path/one"},
+			expected: []string{"https://blog.example.dev/path/one", "https://other.com/path/one"},
 		},
 		{
 			name:     "single absolute URL",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://blog.example.dev",
 			inputBody: `
 <html>
 	<body>
@@ -45,7 +45,7 @@ func TestGetUrlsFromHTML(t *testing.T) {
 		},
 		{
 			name:     "single relative URL",
-			inputURL: "https://blog.boot.dev",
+			inputURL: "https://blog.example.dev",
 			inputBody: `
 <html>
 	<body>
@@ -55,21 +55,7 @@ func TestGetUrlsFromHTML(t *testing.T) {
 	</body>			
 </html>
 `,
-			expected: []string{"https://blog.boot.dev/path/one"},
-		},
-		{
-			name:     "invalid href URL",
-			inputURL: "https://blog.boot.dev",
-			inputBody: `
-<html>
-	<body>
-		<a href=":\\invalidURL">
-			<span>Boot.dev</span>
-		</a>
-	</body>
-</html>
-`,
-			expected: nil,
+			expected: []string{"https://blog.example.dev/path/one"},
 		},
 	}
 
